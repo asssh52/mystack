@@ -17,10 +17,10 @@ CXX = clang++
 all: main
 
 main: main.o mystack.o
-	$(CXX) main.o mystack.o $(CXXFLAGS) -o main && clear && ./main
+	$(CXX) main.o mystack.o $(CXXFLAGS) -o main
 main.o: main.cpp
 	$(CXX) -c main.cpp
-mystack.o: mystack.cpp
+mystack.o: mystack.cpp mystack.hpp
 	$(CXX) -c mystack.cpp
 clean:
-	rm -f kek.o kek
+	rm -f main main.o mystack.o
