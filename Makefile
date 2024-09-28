@@ -10,7 +10,7 @@ CXX_FLAGS = -D _DEBUG -ggdb3 -std=c++17 -O0 -Wall -Wextra -Weffc++ -Waggressive-
    -Wvariadic-macros -Wno-literal-suffix -Wno-missing-field-initializers -Wno-narrowing            \
    -Wno-old-style-cast -Wno-varargs -Wstack-protector -fcheck-new -fsized-deallocation             \
    -fstack-protector -fstrict-overflow -fno-omit-frame-pointer -Wlarger-than=8192                  \
-   -Wstack-usage=8192 -fsanitize=address -fsanitize=undefined -fPIE -Werror=vla
+   -Wstack-usage=8192 -fsanitize=address -fsanitize=undefined -fPIE -Werror=vla -Wno-format
 
 CXX = clang++
 

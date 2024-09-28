@@ -1,17 +1,41 @@
 #pragma once
 
-#define DBG(...)      __VA_ARGS__
+#define DBG_ENABLE
+
 #define CNR_PRT(...)  __VA_ARGS__
 #define HASH_PRT(...) __VA_ARGS__
 
-#ifdef DBG
+#ifdef DBG_ENABLE
+    #define DBG(...)      __VA_ARGS__
+
     #define STK_CHECK(stk, file, line)\
     if (StackVerify(stk)){\
         StackDump(stk, file, line);\
         return ERR;\
     }
+    #define DBGStackCtor(stk)\
+        StackCtor(stk , __FILE__, __LINE__)
+    #define DBGStackDtor(stk)\
+        StackDtor(stk , __FILE__, __LINE__)
+    #define DBGStackPush(stk, x)\
+        StackPush(stk, x, __FILE__, __LINE__)
+    #define DBGStackPop(stk, x)\
+        StackPop(stk, x, __FILE__, __LINE__)
+    #define DBGPrintLine(...)\
+        __VA_ARGS__
 #else
     #define STK_CHECK(...)
+    #define DBG(...)
+    #define DBGStackCtor(stk)\
+        StackCtor(stk)
+    #define DBGStackDtor(stk)\
+        StackDtor(stk)
+    #define DBGStackPush(stk, x)\
+        StackPush(stk, x)
+    #define DBGStackPop(stk, x)\
+        StackPop(stk, x)
+    #define DBGPrintLine(...)\
+        "unknown"
 #endif
 
 enum stackExits{
@@ -23,23 +47,28 @@ enum stackExits{
     STK_NULL = 5,
     MEM_FULL = 6,
     CNR_STK_ERR = 7,
-    CNR_BUF_ERR = 8
+    CNR_BUF_ERR = 8,
+    HASH_STK_ERR = 9,
+    HASH_BUF_ERR = 10,
+    REALLOC_ERR = 11
 
 };
 
-typedef long long StackElem_t;
+typedef uint64_t canary_t;
+
+typedef int64_t StackElem_t;
 
 typedef struct Stack_t{
-    CNR_PRT         (size_t chicken_first;)
+    CNR_PRT         (canary_t chicken_first;)
     DBG             (const char* name;)
     DBG             (const char* filename;)
-    DBG             (size_t line;)
+    DBG             (uint64_t line;)
     StackElem_t*            data;
     size_t                  size;
     size_t                  capacity;
-    HASH_PRT        (size_t bufferHash;)
-    HASH_PRT        (size_t stackHash;)
-    CNR_PRT         (size_t chicken_second;)
+    HASH_PRT        (uint64_t bufferHash;)
+    HASH_PRT        (uint64_t stackHash;)
+    CNR_PRT         (canary_t chicken_second;)
 } Stack_t;
 
 stackExits StackCtor   (Stack_t* stk                     DBG(, const char* fileName, int line));
