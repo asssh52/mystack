@@ -56,7 +56,7 @@ stackExits StackRelocate(Stack_t* stk, reallocParameters param){ //TODO: REMOVE 
 
 
         printf(BLU "old data pointer:%p\n" RESET, stk->data);
-        StackElem_t* newDataPointer = (StackElem_t*)realloc((char*)stk->data CNR_PRT(- 1 * sizeof(canary_t)), ((stk->capacity CNR_PRT(+ 2)) * sizeof(StackElem_t))) CNR_PRT(+ 1);
+        StackElem_t* newDataPointer = (StackElem_t*)realloc((char*)stk->data CNR_PRT(- 1 * sizeof(canary_t)), ((stk->capacity CNR_PRT(+ 2)) * sizeof(StackElem_t))) CNR_PRT(+ 1 * sizeof(canary_t));
 
         if (param == ADD_MEMORY) memset((char*)newDataPointer + oldCapacity * sizeof(StackElem_t), 0, oldCapacity * sizeof(StackElem_t));
 
@@ -106,8 +106,7 @@ stackExits StackCtor(Stack_t* stk DBG(, const char* fileName, int line)){
 
 stackExits StackDtor(Stack_t* stk DBG(, const char* fileName, int line)){
     STK_CHECK(stk, fileName, line)
-
-    free(stk->data CNR_PRT(- 1 * sizeof(canary_t)));
+    free((char*)stk->data CNR_PRT(- 1 * sizeof(canary_t)));
 
     stk->data = nullptr;
 
