@@ -4,6 +4,12 @@
 #include "mystack.hpp"
 #include "colors.hpp"
 
+enum reallocParameters{
+    ADD_MEMORY = 1,
+    REDUCE_MEMORY = -1,
+    MLTPL_CAPACITY_BOUND = 256
+};
+
 uint64_t djb2hashFunc(void* input, size_t size){
     uint64_t hash = 0xeda;
     for (int i = 0; i < size; i++){
@@ -34,43 +40,37 @@ uint64_t FindStackHash(Stack_t* stk){
     return newStackHash;
 }
 
-stackExits StackRelocate(Stack_t* stk, int param){ //TODO: REMOVE COPYPASTE
-    if (param == 1){
-        *(stk->data + stk->capacity) = 0;
+stackExits StackRelocate(Stack_t* stk, reallocParameters param){ //TODO: REMOVE COPYPASTE
+    if (param == ADD_MEMORY || param == REDUCE_MEMORY){
+        *(canary_t*)((char*)stk->data + (stk->capacity * sizeof(StackElem_t) / 8) * 8 + 8) = 0;
         uint64_t oldCapacity = stk->capacity;
-        stk->capacity *= 2;
+        if      (param ==    ADD_MEMORY){
+            if  (stk->capacity <= MLTPL_CAPACITY_BOUND) stk->capacity *= 2;
+            else stk->capacity += MLTPL_CAPACITY_BOUND;
+        }
 
-        printf(BLU "old data pointer:%p\n", stk->data);
+        else if (param == REDUCE_MEMORY){
+            if  (stk->capacity < 3 * MLTPL_CAPACITY_BOUND) stk->capacity /= 2;
+            else stk->capacity -= MLTPL_CAPACITY_BOUND;
+        }
+
+
+        printf(BLU "old data pointer:%p\n" RESET, stk->data);
         StackElem_t* newDataPointer = (StackElem_t*)realloc((char*)stk->data CNR_PRT(- 1 * sizeof(canary_t)), ((stk->capacity CNR_PRT(+ 2)) * sizeof(StackElem_t))) CNR_PRT(+ 1);
-        memset((char*)newDataPointer + oldCapacity * sizeof(StackElem_t), 0, oldCapacity * sizeof(StackElem_t));
-        printf(    "new data pointer:%p\n" RESET, newDataPointer);
 
-        //StackDump(stk, __FILE__, __LINE__);
+        if (param == ADD_MEMORY) memset((char*)newDataPointer + oldCapacity * sizeof(StackElem_t), 0, oldCapacity * sizeof(StackElem_t));
+
+        printf(BLU "new data pointer:%p\n" RESET, newDataPointer);
+
+        printf(BLU "old capacity:%llu\n"    RESET, oldCapacity);
+        printf(BLU "new capacity:%lu\n"    RESET, stk->capacity);
+
         if (!newDataPointer){
             return REALLOC_ERR;
         }
 
         stk->data = newDataPointer;
-        *(stk->data + stk->capacity) = 0x900deda;
-    }
-
-    else if (param == -1){
-        *(stk->data + stk->capacity) = 0;
-        uint64_t oldCapacity = stk->capacity;
-        stk->capacity /= 2;
-
-        printf(BLU "old data pointer:%p\n", stk->data);
-        StackElem_t* newDataPointer = (StackElem_t*)realloc((char*)stk->data CNR_PRT(- 1 * sizeof(canary_t)), ((stk->capacity CNR_PRT(+ 2)) * sizeof(StackElem_t))) CNR_PRT(+ 1);
-        printf(    "new data pointer:%p\n" RESET, newDataPointer);
-
-        if (!newDataPointer){
-            return REALLOC_ERR;
-        }
-
-        stk->data = newDataPointer;
-        *(stk->data + stk->capacity) = 0x900deda;
-
-        StackDump(stk, __FILE__, __LINE__);
+        *(canary_t*)((char*)stk->data + (stk->capacity * sizeof(StackElem_t) / 8) * 8 + 8) = 0x900deda;
     }
 
     else{
@@ -84,12 +84,12 @@ stackExits StackCtor(Stack_t* stk DBG(, const char* fileName, int line)){
     if (!stk) return STK_NULL;
 
     if (!stk->capacity) stk->capacity = 4;
-    stk->data = (StackElem_t*)calloc(stk->capacity CNR_PRT(+ 2), sizeof(StackElem_t)) CNR_PRT(+ 1);
+    stk->data = (StackElem_t*)((char*)calloc(1, stk->capacity * sizeof(StackElem_t) CNR_PRT(+ 3 * sizeof(canary_t))) CNR_PRT(+ 1 * sizeof(canary_t)));
     if (!stk->data) return MEM_FULL;
 
     CNR_PRT(
-    *(stk->data - 1)             = 0xbadeda;
-    *(stk->data + stk->capacity) = 0x900deda;
+    *(canary_t*)((char*)stk->data - 1 * sizeof(canary_t))                              = 0xbadeda;
+    *(canary_t*)((char*)stk->data + (stk->capacity * sizeof(StackElem_t) / 8) * 8 + 8) = 0x900deda;
 
     stk->chicken_first  = 0xBADC0DE ;
     stk->chicken_second = 0x900DC0DE;
@@ -107,7 +107,7 @@ stackExits StackCtor(Stack_t* stk DBG(, const char* fileName, int line)){
 stackExits StackDtor(Stack_t* stk DBG(, const char* fileName, int line)){
     STK_CHECK(stk, fileName, line)
 
-    free(stk->data CNR_PRT(- 1));
+    free(stk->data CNR_PRT(- 1 * sizeof(canary_t)));
 
     stk->data = nullptr;
 
@@ -122,17 +122,17 @@ stackExits StackPush(Stack_t* stk, StackElem_t item DBG(, const char* fileName, 
     *(stk->data + stk->size) = item;
     stk->size += 1;
 
-    printf(GRN "item (%lld) pushed\n" RESET, item);
-
     if (stk->size >= stk->capacity){
-        if (!StackRelocate(stk, 1)){
-            printf(GRN "new memory allocated\n" RESET);
+        if (!StackRelocate(stk, ADD_MEMORY)){
+            printf(BLU "new memory allocated\n" RESET);
+            printf(CYN "item (%lld) pushed" DBG(" %s:%d") "\n" RESET , item DBG(, fileName, line));
         }
         else{
             printf(RED "reallocation error\n"   RESET);
             return REALLOC_ERR;
         }
     }
+    else printf(GRN "item (%lld) pushed" DBG(" %s:%d") "\n" RESET , item DBG(, fileName, line));
 
     HASH_PRT(PutHash(stk);)
     STK_CHECK(stk, fileName, line)
@@ -141,21 +141,27 @@ stackExits StackPush(Stack_t* stk, StackElem_t item DBG(, const char* fileName, 
 
 stackExits StackPop(Stack_t* stk, StackElem_t* item DBG(, const char* fileName, int line)){
     STK_CHECK(stk, fileName, line)
+
+    if (stk->size == 0){
+        printf(RED "stack underflow" DBG(" %s:%d") "\n" RESET DBG(, fileName, line));
+        return SIZE_UNDERFLOW;
+    }
+
     *item = *(stk->data + stk->size - 1);
             *(stk->data + stk->size - 1) = 0;
     stk->size -= 1;
 
-    if (stk->capacity > 4 && stk->size <= stk->capacity / 4){
-        if(!StackRelocate(stk, -1)){
-            printf(GRN "new memory freed\n" RESET);
+    if (stk->capacity > 8 && (stk->size <= stk->capacity / 4 || (stk->capacity - 2 * MLTPL_CAPACITY_BOUND >= stk->size && stk->size >= 2 * MLTPL_CAPACITY_BOUND && stk->capacity >= 4 * MLTPL_CAPACITY_BOUND))){
+        if(!StackRelocate(stk, REDUCE_MEMORY)){
+            printf(BLU "new memory freed\n" RESET);
+            printf(CYN "item (%lld) popped" DBG(" %s:%d") "\n" RESET , *item DBG(, fileName, line));
         }
         else{
-            printf(RED "freeing error\n"   RESET);
+            printf(RED "freeing error" DBG(" %s:%d") "\n" RESET DBG(, fileName, line));
             return REALLOC_ERR;
         }
     }
-
-    printf(GRN "item (%lld) popped\n" RESET, *item);
+    else printf(GRN "item (%lld) popped" DBG(" %s:%d") "\n" RESET , *item DBG(, fileName, line));
 
     HASH_PRT(PutHash(stk);)
     STK_CHECK(stk, fileName, line)
@@ -164,7 +170,7 @@ stackExits StackPop(Stack_t* stk, StackElem_t* item DBG(, const char* fileName, 
 
 stackExits StackDump(Stack_t* stk, const char* filename, int line){
     if (!stk){
-        printf(RED "stack does not exist\n" RESET);
+        printf(RED "stack does not exist %s:%d" "\n" RESET, filename, line);
         return ERR;
     }
     printf(MAG "Stack_t[%p] born at " DBGPrintLine("%s:%lld, name \"%s\"") "\n" YEL, stk DBG(, stk->filename, stk->line, stk->name));
@@ -173,8 +179,8 @@ stackExits StackDump(Stack_t* stk, const char* filename, int line){
 
     CNR_PRT(
     printf("first chick: \t%llx", stk->chicken_first);
-    if (stk->chicken_first == 0xBADC0DE) printf(GRN " <OK>\n" YEL);
-        else printf(RED " <NOT OK>\n" YEL);
+    if (stk->chicken_first == 0xBADC0DE) printf(GRN " \t\t<OK>\n" YEL);
+        else printf(RED " \t\t<NOT OK>\n" YEL);
     printf("expected:   \tbadc0de\n");
     )
 
@@ -183,9 +189,9 @@ stackExits StackDump(Stack_t* stk, const char* filename, int line){
 
     if (stk->data){
         CNR_PRT(
-        printf("first hen:\t%llx", *(stk->data - 1));
-        if (*(stk->data - 1) == 0xbadeda) printf(GRN " <OK>\n" YEL);
-            else printf(RED " <NOT OK>\n" YEL);
+        printf("first hen:\t%llx", *(canary_t*)((char*)stk->data - 1 * sizeof(canary_t)));
+        if (*(canary_t*)((char*)stk->data - 1 * sizeof(canary_t)) == 0xbadeda) printf(GRN " \t\t\t<OK>\n" YEL);
+            else printf(RED " \t\t\t<NOT OK>\n" YEL);
         printf("expected:   \tbadeda\n");
         )
 
@@ -195,9 +201,9 @@ stackExits StackDump(Stack_t* stk, const char* filename, int line){
         }
 
         CNR_PRT(
-        printf("second hen: \t%llx", *(stk->data + stk->capacity));
-        if (*(stk->data + stk->capacity) == 0x900deda) printf(GRN " <OK>\n" YEL);
-            else printf(RED " <NOT OK>\n" YEL);
+        printf("second hen: \t%llx", *(canary_t*)((char*)stk->data + (stk->capacity * sizeof(StackElem_t) / 8) * 8 + 8));
+        if (*(canary_t*)((char*)stk->data + (stk->capacity * sizeof(StackElem_t) / 8) * 8 + 8) == 0x900deda) printf(GRN " \t\t<OK>\n" YEL);
+            else printf(RED " \t\t<NOT OK>\n" YEL);
         printf("expected:   \t900deda\n");
         )
     }
@@ -208,8 +214,8 @@ stackExits StackDump(Stack_t* stk, const char* filename, int line){
     CNR_PRT(
 
     printf("second chick:  \t%llx", stk->chicken_second);
-    if (stk->chicken_second == 0x900DC0DE) printf(GRN " <OK>\n" YEL);
-        else printf(RED " <NOT OK>\n" YEL);
+    if (stk->chicken_second == 0x900DC0DE) printf(GRN " \t\t<OK>\n" YEL);
+        else printf(RED " \t\t<NOT OK>\n" YEL);
     printf("expected:   \t900dc0de\n");
     )
 
@@ -217,14 +223,14 @@ stackExits StackDump(Stack_t* stk, const char* filename, int line){
 
     uint64_t newBufferHash = FindBufferHash(stk);
     printf("buffer hash:\t%llx", stk->bufferHash);
-    if (newBufferHash != stk->bufferHash) printf(RED " <NOT OK>\n" YEL);
-        else printf(GRN " <OK>\n" YEL);
+    if (newBufferHash != stk->bufferHash) printf(RED " \t<NOT OK>\n" YEL);
+        else printf(GRN " \t<OK>\n" YEL);
     printf("expected:   \t%llx\n", newBufferHash);
 
     uint64_t newStackHash = FindStackHash(stk);
     printf("stack hash: \t%llx", stk->stackHash);
-    if (newStackHash != stk->stackHash) printf(RED " <NOT OK>\n" YEL);
-        else printf(GRN " <OK>\n" YEL);
+    if (newStackHash != stk->stackHash) printf(RED " \t<NOT OK>\n" YEL);
+        else printf(GRN " \t<OK>\n" YEL);
     printf("expected:   \t%llx\n", newStackHash);
 
     )
@@ -249,7 +255,7 @@ stackExits StackVerify(Stack_t* stk){
     if (stk->chicken_first != 0xbadc0de || stk->chicken_second != 0x900dc0de){
         return CNR_STK_ERR;
     }
-    if (*(stk->data - 1) != 0xbadeda || *(stk->data + stk->capacity) != 0x900deda){
+    if (*(canary_t*)((char*)stk->data - 1 * sizeof(canary_t)) != 0xbadeda || *(canary_t*)((char*)stk->data + (stk->capacity * sizeof(StackElem_t) / 8) * 8 + 8) != 0x900deda){
         return CNR_BUF_ERR;
     }
     )

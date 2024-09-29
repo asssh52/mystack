@@ -56,7 +56,7 @@ enum stackExits{
 
 typedef uint64_t canary_t;
 
-typedef int64_t StackElem_t;
+typedef char StackElem_t;
 
 typedef struct Stack_t{
     CNR_PRT         (canary_t chicken_first;)

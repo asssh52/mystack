@@ -7,23 +7,21 @@ int main(){
 
     DBGStackCtor(&stack);
 
-    DBGStackPush(&stack, 1);
-    DBGStackPush(&stack, 1);
     StackDump(&stack, __FILE__, __LINE__);
 
-    long long x = 0;
+    char x = 0;
 
-    for (int i = 0; i < 20; i++){
-        DBGStackPush(&stack, 1);
+    for (int i = 0; i < 1; i++){
+        DBGStackPush(&stack, '1');
     }
-    for (int i = 0; i < 20; i++){
+    StackDump(&stack, __FILE__, __LINE__);
+    for (int i = 0; i < 1; i++){
         DBGStackPop(&stack, &x);
     }
 
 
 
-
-    StackDump(&stack, __FILE__, __LINE__);
+    DBGStackPop(&stack, &x);
     DBGStackPop(&stack, &x);
     StackDump(&stack, __FILE__, __LINE__);
     DBGStackDtor(&stack);
