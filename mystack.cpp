@@ -45,7 +45,7 @@ uint64_t FindStackHash(Stack_t* stk){
 }
 )
 
-stackExits StackRelocate(Stack_t* stk, reallocParameters param){ //TODO: REMOVE COPYPASTE
+stackExits StackRelocate(Stack_t* stk, reallocParameters param){
     if (param == ADD_MEMORY || param == REDUCE_MEMORY){
         *(canary_t*)((char*)stk->data + (stk->capacity * sizeof(StackElem_t) / 8) * 8 + 8) = 0;
         uint64_t oldCapacity = stk->capacity;
@@ -237,14 +237,21 @@ stackExits StackDump(Stack_t* stk, const char* filename, int line){
 
     HASH_PRT(
 
-    uint64_t newBufferHash = FindBufferHash(stk);
-    printf("buffer hash:\t%llx", stk->bufferHash);
-    if (newBufferHash != stk->bufferHash) printf(RED " \t<NOT OK>\n" YEL);
+    if (!stk->data){
+        printf(RED "cannot find buffer data\n" RESET);
+    }
+
+    else{
+        int64_t newBufferHash = FindBufferHash(stk);
+        printf("buffer hash:\t%llx", stk->bufferHash);
+        if (newBufferHash != stk->bufferHash) printf(RED " \t<NOT OK>\n" YEL);
         else printf(GRN " \t<OK>\n" YEL);
-    printf("expected:   \t%llx\n", newBufferHash);
+        printf("expected:   \t%llx\n", newBufferHash);
+    }
+
 
     uint64_t newStackHash = FindStackHash(stk);
-    printf("stack hash: \t%llx", stk->stackHash);
+    printf(YEL "stack hash: \t%llx", stk->stackHash);
     if (newStackHash != stk->stackHash) printf(RED " \t<NOT OK>\n" YEL);
         else printf(GRN " \t<OK>\n" YEL);
     printf("expected:   \t%llx\n", newStackHash);

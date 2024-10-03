@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "mystack.hpp"
+#include "colors.hpp"
 
 int main(){
     Stack_t stack = {CNR_PRT(0 DBG(,)) DBG("stack", __FILE__, __LINE__)};
