@@ -5,7 +5,6 @@
 
 int main(){
     Stack_t stack = {CNR_PRT(0 DBG(,)) DBG("stack", __FILE__, __LINE__)};
-
     DBGStackCtor(&stack);
 
     StackDump(&stack, __FILE__, __LINE__);
@@ -20,7 +19,7 @@ int main(){
         DBGStackPop(&stack, &x);
     }
 
-    StackDump(&stack, __FILE__, __LINE__);
+    StackDump(&stack DBG(, __FILE__, __LINE__));
 
 
     DBGStackPop(&stack, &x);

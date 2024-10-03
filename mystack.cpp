@@ -184,13 +184,13 @@ stackExits StackPop(Stack_t* stk, StackElem_t* item DBG(, const char* fileName, 
     return OK;
 }
 
-stackExits StackDump(Stack_t* stk, const char* filename, int line){
+stackExits StackDump(Stack_t* stk DBG(, const char* filename, int line)){
     if (!stk){
-        printf(RED "stack does not exist %s:%d" "\n" RESET, filename, line);
+        printf(RED "stack does not exist"  DBGPrintLine("%s:%d") "\n" RESET DBG(, filename, line));
         return ERR;
     }
     printf(MAG "Stack_t[%p] born at " DBGPrintLine("%s:%lld, name \"%s\"") "\n" YEL, stk DBG(, stk->filename, stk->line, stk->name));
-    printf("dumb dump called from: %s:%d\n", filename, line);
+    printf("dumb dump called from:" DBGPrintLine("%s:%d") "\n" DBG(, filename, line));
     printf("{\n");
 
     CNR_PRT(

@@ -24,7 +24,11 @@
     #define DBGPrintLine(...)\
         __VA_ARGS__
 #else
-    #define STK_CHECK(...)
+    #define STK_CHECK(stk,...)\
+    if (StackVerify(stk)){\
+        StackDump(stk);\
+        return ERR;\
+    }
     #define DBG(...)
     #define DBGStackCtor(stk)\
         StackCtor(stk)
@@ -75,5 +79,5 @@ stackExits StackCtor   (Stack_t* stk                     DBG(, const char* fileN
 stackExits StackDtor   (Stack_t* stk                     DBG(, const char* fileName, int line));
 stackExits StackPush   (Stack_t* stk, StackElem_t  item  DBG(, const char* fileName, int line));
 stackExits StackPop    (Stack_t* stk, StackElem_t* item  DBG(, const char* fileName, int line));
-stackExits StackDump   (Stack_t* stk, const char* filename, int line);
+stackExits StackDump   (Stack_t* stk                     DBG(, const char* filename, int line));
 stackExits StackVerify (Stack_t* stk);
