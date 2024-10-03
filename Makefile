@@ -19,8 +19,8 @@ all: main
 main: main.o mystack.o
 	$(CXX) main.o mystack.o $(CXXFLAGS) -o main
 main.o: main.cpp
-	$(CXX) -c main.cpp
+	$(CXX) -c main.cpp $(CXXFLAGS) 
 mystack.o: mystack.cpp mystack.hpp
-	$(CXX) -c mystack.cpp
+	$(CXX) -c mystack.cpp $(CXXFLAGS)
 clean:
 	rm -f main main.o mystack.o

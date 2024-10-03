@@ -4,10 +4,12 @@
 #include "mystack.hpp"
 #include "colors.hpp"
 
+const uint64_t startingCapacity = 4;
+
 enum reallocParameters{
     ADD_MEMORY = 1,
     REDUCE_MEMORY = -1,
-    MLTPL_CAPACITY_BOUND = 256
+    MLTPL_CAPACITY_BOUND = 16
 };
 
 uint64_t djb2hashFunc(void* input, size_t size){
@@ -18,11 +20,13 @@ uint64_t djb2hashFunc(void* input, size_t size){
     return hash;
 }
 
+HASH_PRT(
 void PutHash(Stack_t* stk){
     stk->bufferHash = djb2hashFunc((char*)stk->data CNR_PRT(- 1 * sizeof(canary_t)), stk->capacity * sizeof(StackElem_t) CNR_PRT(+ 2 * sizeof(canary_t)));
-    stk->stackHash = 0;
-    stk->stackHash = djb2hashFunc(stk, 5 * sizeof(char*) CNR_PRT(+ 4 * sizeof(canary_t)) DBG(+ 3 * sizeof(char*)));
+    stk->stackHash  = 0;
+    stk->stackHash  77666666666= djb2hashFunc(stk, 5 * sizeof(char*) CNR_PRT(+ 4 * sizeof(canary_t)) DBG(+ 3 * sizeof(char*)));
 }
+
 
 uint64_t FindBufferHash(Stack_t* stk){
     uint64_t newBufferHash = djb2hashFunc((char*)stk->data CNR_PRT(- 1 * sizeof(canary_t)), stk->capacity * sizeof(StackElem_t) CNR_PRT(+ 2 * sizeof(canary_t)));
@@ -39,13 +43,14 @@ uint64_t FindStackHash(Stack_t* stk){
 
     return newStackHash;
 }
+)
 
 stackExits StackRelocate(Stack_t* stk, reallocParameters param){ //TODO: REMOVE COPYPASTE
     if (param == ADD_MEMORY || param == REDUCE_MEMORY){
         *(canary_t*)((char*)stk->data + (stk->capacity * sizeof(StackElem_t) / 8) * 8 + 8) = 0;
         uint64_t oldCapacity = stk->capacity;
-        if      (param ==    ADD_MEMORY){
-            if  (stk->capacity <= MLTPL_CAPACITY_BOUND) stk->capacity *= 2;
+        if      (param == ADD_MEMORY   ){
+            if  (stk->capacity <=   MLTPL_CAPACITY_BOUND)  stk->capacity *= 2;
             else stk->capacity += MLTPL_CAPACITY_BOUND;
         }
 
@@ -56,12 +61,15 @@ stackExits StackRelocate(Stack_t* stk, reallocParameters param){ //TODO: REMOVE 
 
 
         printf(BLU "old data pointer:%p\n" RESET, stk->data);
-        StackElem_t* newDataPointer = (StackElem_t*)realloc((char*)stk->data CNR_PRT(- 1 * sizeof(canary_t)), ((stk->capacity CNR_PRT(+ 2)) * sizeof(StackElem_t))) CNR_PRT(+ 1 * sizeof(canary_t));
+
+        StackElem_t* newDataPointer = (StackElem_t*)(realloc((char*)stk->data CNR_PRT(- 1 * sizeof(canary_t)),
+                                                            stk->capacity * sizeof(StackElem_t) CNR_PRT(+ 2 * sizeof(canary_t))));
+
+        CNR_PRT(newDataPointer = (StackElem_t*)((char*)newDataPointer + 1 * sizeof(canary_t)));
 
         if (param == ADD_MEMORY) memset((char*)newDataPointer + oldCapacity * sizeof(StackElem_t), 0, oldCapacity * sizeof(StackElem_t));
 
         printf(BLU "new data pointer:%p\n" RESET, newDataPointer);
-
         printf(BLU "old capacity:%llu\n"    RESET, oldCapacity);
         printf(BLU "new capacity:%lu\n"    RESET, stk->capacity);
 
@@ -83,8 +91,12 @@ stackExits StackRelocate(Stack_t* stk, reallocParameters param){ //TODO: REMOVE 
 stackExits StackCtor(Stack_t* stk DBG(, const char* fileName, int line)){
     if (!stk) return STK_NULL;
 
-    if (!stk->capacity) stk->capacity = 4;
-    stk->data = (StackElem_t*)((char*)calloc(1, stk->capacity * sizeof(StackElem_t) CNR_PRT(+ 3 * sizeof(canary_t))) CNR_PRT(+ 1 * sizeof(canary_t)));
+    if (!stk->capacity) stk->capacity = startingCapacity;
+    stk->data = (StackElem_t*)(calloc(1,
+                                      stk->capacity * sizeof(StackElem_t)
+                                      CNR_PRT(  + 3 * sizeof(canary_t  ))));
+
+    CNR_PRT(stk->data = (StackElem_t*)((char*)stk->data + 1 * sizeof(canary_t)));
     if (!stk->data) return MEM_FULL;
 
     CNR_PRT(
@@ -150,7 +162,12 @@ stackExits StackPop(Stack_t* stk, StackElem_t* item DBG(, const char* fileName, 
             *(stk->data + stk->size - 1) = 0;
     stk->size -= 1;
 
-    if (stk->capacity > 8 && (stk->size <= stk->capacity / 4 || (stk->capacity - 2 * MLTPL_CAPACITY_BOUND >= stk->size && stk->size >= 2 * MLTPL_CAPACITY_BOUND && stk->capacity >= 4 * MLTPL_CAPACITY_BOUND))){
+    int linearReallocBound = (stk->capacity >= stk->size + 2 * MLTPL_CAPACITY_BOUND &&
+                              stk->capacity >=             4 * MLTPL_CAPACITY_BOUND &&
+                                  stk->size >=             2 * MLTPL_CAPACITY_BOUND   );
+
+    if  (stk->capacity > 8 && (stk->size <= stk->capacity / 4 || linearReallocBound)){
+
         if(!StackRelocate(stk, REDUCE_MEMORY)){
             printf(BLU "new memory freed\n" RESET);
             printf(CYN "item (%lld) popped" DBG(" %s:%d") "\n" RESET , *item DBG(, fileName, line));
@@ -254,7 +271,9 @@ stackExits StackVerify(Stack_t* stk){
     if (stk->chicken_first != 0xbadc0de || stk->chicken_second != 0x900dc0de){
         return CNR_STK_ERR;
     }
-    if (*(canary_t*)((char*)stk->data - 1 * sizeof(canary_t)) != 0xbadeda || *(canary_t*)((char*)stk->data + (stk->capacity * sizeof(StackElem_t) / 8) * 8 + 8) != 0x900deda){
+    if (*(canary_t*)((char*)stk->data - 1 * sizeof(canary_t)) != 0xbadeda ||
+        *(canary_t*)((char*)stk->data + (stk->capacity * sizeof(StackElem_t) / 8) * 8 + 8) != 0x900deda){
+
         return CNR_BUF_ERR;
     }
     )

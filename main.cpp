@@ -9,21 +9,20 @@ int main(){
 
     StackDump(&stack, __FILE__, __LINE__);
 
-    char x = 0;
+    StackElem_t x = 0;
 
-    for (int i = 0; i < 100; i++){
-        DBGStackPush(&stack, '1');
+    for (int i = 0; i < 400; i++){
+        DBGStackPush(&stack, 1);
     }
-    StackDump(&stack, __FILE__, __LINE__);
+    //StackDump(&stack, __FILE__, __LINE__);
     for (int i = 0; i < 100; i++){
         DBGStackPop(&stack, &x);
     }
 
-
-
-    DBGStackPop(&stack, &x);
-    DBGStackPop(&stack, &x);
     StackDump(&stack, __FILE__, __LINE__);
+
+
+    DBGStackPop(&stack, &x);
     DBGStackDtor(&stack);
 
 }
