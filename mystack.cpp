@@ -24,7 +24,7 @@ HASH_PRT(
 void PutHash(Stack_t* stk){
     stk->bufferHash = djb2hashFunc((char*)stk->data CNR_PRT(- 1 * sizeof(canary_t)), stk->capacity * sizeof(StackElem_t) CNR_PRT(+ 2 * sizeof(canary_t)));
     stk->stackHash  = 0;
-    stk->stackHash  77666666666= djb2hashFunc(stk, 5 * sizeof(char*) CNR_PRT(+ 4 * sizeof(canary_t)) DBG(+ 3 * sizeof(char*)));
+    stk->stackHash  = djb2hashFunc(stk, 5 * sizeof(char*) CNR_PRT(+ 4 * sizeof(canary_t)) DBG(+ 3 * sizeof(char*)));
 }
 
 
