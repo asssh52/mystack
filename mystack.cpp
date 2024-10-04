@@ -69,9 +69,9 @@ stackExits StackRelocate(Stack_t* stk, reallocParameters param){
 
         if (param == ADD_MEMORY) memset((char*)newDataPointer + oldCapacity * sizeof(StackElem_t), 0, oldCapacity * sizeof(StackElem_t));
 
-        printf(BLU "new data pointer:%p\n" RESET, newDataPointer);
+        printf(BLU "new data pointer:%p\n"  RESET, newDataPointer);
         printf(BLU "old capacity:%llu\n"    RESET, oldCapacity);
-        printf(BLU "new capacity:%lu\n"    RESET, stk->capacity);
+        printf(BLU "new capacity:%lu\n"     RESET, stk->capacity);
 
         if (!newDataPointer){
             return REALLOC_ERR;
