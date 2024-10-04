@@ -47,7 +47,7 @@ uint64_t FindStackHash(Stack_t* stk){
 
 stackExits StackRelocate(Stack_t* stk, reallocParameters param){
     if (param == ADD_MEMORY || param == REDUCE_MEMORY){
-        *(canary_t*)((char*)stk->data + (stk->capacity * sizeof(StackElem_t) / 8) * 8 + 8) = 0;
+        CNR_PRT(*(canary_t*)((char*)stk->data + (stk->capacity * sizeof(StackElem_t) / 8) * 8 + 8) = 0;)
         uint64_t oldCapacity = stk->capacity;
         if      (param == ADD_MEMORY   ){
             if  (stk->capacity <=   MLTPL_CAPACITY_BOUND)  stk->capacity *= 2;
@@ -78,7 +78,7 @@ stackExits StackRelocate(Stack_t* stk, reallocParameters param){
         }
 
         stk->data = newDataPointer;
-        *(canary_t*)((char*)stk->data + (stk->capacity * sizeof(StackElem_t) / 8) * 8 + 8) = 0x900deda;
+        CNR_PRT(*(canary_t*)((char*)stk->data + (stk->capacity * sizeof(StackElem_t) / 8) * 8 + 8) = 0x900deda;)
     }
 
     else{
@@ -93,8 +93,7 @@ stackExits StackCtor(Stack_t* stk DBG(, const char* fileName, int line)){
 
     if (!stk->capacity) stk->capacity = startingCapacity;
     stk->data = (StackElem_t*)(calloc(1,
-                                      stk->capacity * sizeof(StackElem_t)
-                                      CNR_PRT(  + 3 * sizeof(canary_t  ))));
+                                      stk->capacity * sizeof(StackElem_t) CNR_PRT(+ 2 * sizeof(canary_t))));
 
     CNR_PRT(stk->data = (StackElem_t*)((char*)stk->data + 1 * sizeof(canary_t)));
     if (!stk->data) return MEM_FULL;

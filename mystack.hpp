@@ -1,9 +1,21 @@
 #pragma once
 
-#define DBG_ENABLE
+//#define DBG_ENABLE
+#define CNR_ENABLE
+#define HASH_ENABLE
 
-#define CNR_PRT(...)  __VA_ARGS__
-#define HASH_PRT(...) __VA_ARGS__
+#ifdef CNR_ENABLE
+    #define CNR_PRT(...)  __VA_ARGS__
+#else
+    #define CNR_PRT(...)
+#endif
+
+#ifdef HASH_ENABLE
+    #define HASH_PRT(...)  __VA_ARGS__
+#else
+    #define HASH_PRT(...)
+#endif
+
 
 #ifdef DBG_ENABLE
     #define DBG(...)      __VA_ARGS__
