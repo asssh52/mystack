@@ -9,11 +9,14 @@ int main(){
     StackElem_t x = 0;
 
     StackCtor(&stack);
-    StackDtor(&stack);
-    StackCtor(&stack);
-    StackPush(&stack, 1);
-    StackPush(&stack, 1);
-    StackPush(&stack, 1);
-    StackDump(&stack);
+
+    for (uint64_t i = 0; i < 300; i++){
+        StackPush(&stack, i);
+    }
+
+    for (uint64_t i = 0; i < 302; i++){
+        StackPop(&stack, &x);
+    }
+
     StackDtor(&stack);
 }

@@ -63,7 +63,7 @@ enum stackExits{
     STK_NULL = 5,
     MEM_FULL = 6,
     CNR_STK_ERR = 7,
-    CNR_BUF_ERR = 8,
+    CNR_BUF_ERR = 6,
     HASH_STK_ERR = 9,
     HASH_BUF_ERR = 10,
     REALLOC_ERR = 11
@@ -75,16 +75,18 @@ typedef uint64_t canary_t;
 typedef uint64_t StackElem_t;
 
 typedef struct Stack_t{
-    CNR_PRT         (canary_t chicken_first;)
-    DBG             (const char* name;)
-    DBG             (const char* filename;)
-    DBG             (uint64_t line;)
-    StackElem_t*              data;
-    size_t                    size;
-    size_t                    capacity;
-    HASH_PRT        (uint64_t bufferHash;)
-    HASH_PRT        (uint64_t stackHash;)
-    CNR_PRT         (canary_t chicken_second;)
+    CNR_PRT         (canary_t     chicken_first;)
+    DBG             (const char*  name;)
+    DBG             (const char*  filename;)
+    DBG             (uint64_t     line;)
+
+                     StackElem_t* data;
+                     size_t       size;
+                     size_t       capacity;
+
+    HASH_PRT        (uint64_t     bufferHash;)
+    HASH_PRT        (uint64_t     stackHash;)
+    CNR_PRT         (canary_t     chicken_second;)
 } Stack_t;
 
 stackExits StackCtor   (Stack_t* stk                     DBG(, const char* fileName, int line));

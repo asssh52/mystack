@@ -59,7 +59,6 @@ stackExits StackRelocate(Stack_t* stk, reallocParameters param){
             else stk->capacity -= MLTPL_CAPACITY_BOUND;
         }
 
-
         printf(BLU "old data pointer:%p\n" RESET, stk->data);
 
         StackElem_t* newDataPointer = (StackElem_t*)(realloc((char*)stk->data CNR_PRT(- 1 * sizeof(canary_t)),
@@ -67,15 +66,17 @@ stackExits StackRelocate(Stack_t* stk, reallocParameters param){
 
         CNR_PRT(newDataPointer = (StackElem_t*)((char*)newDataPointer + 1 * sizeof(canary_t)));
 
-        if (param == ADD_MEMORY) memset((char*)newDataPointer + oldCapacity * sizeof(StackElem_t), 0, oldCapacity * sizeof(StackElem_t));
+        if (!newDataPointer){
+            return REALLOC_ERR;
+        }
+
+        if (param == ADD_MEMORY) memset((char*)newDataPointer + (stk->capacity - oldCapacity) * sizeof(StackElem_t), 0, oldCapacity * sizeof(StackElem_t));
 
         printf(BLU "new data pointer:%p\n"  RESET, newDataPointer);
         printf(BLU "old capacity:%llu\n"    RESET, oldCapacity);
         printf(BLU "new capacity:%lu\n"     RESET, stk->capacity);
 
-        if (!newDataPointer){
-            return REALLOC_ERR;
-        }
+
 
         stk->data = newDataPointer;
         CNR_PRT(*(canary_t*)((char*)stk->data + (stk->capacity * sizeof(StackElem_t) / 8) * 8 + 8) = 0x900deda;)
@@ -117,6 +118,7 @@ stackExits StackCtor(Stack_t* stk DBG(, const char* fileName, int line)){
 
 stackExits StackDtor(Stack_t* stk DBG(, const char* fileName, int line)){
     STK_CHECK(stk, fileName, line)
+
     free((char*)stk->data CNR_PRT(- 1 * sizeof(canary_t)));
 
     stk->data = nullptr;
@@ -129,6 +131,7 @@ stackExits StackDtor(Stack_t* stk DBG(, const char* fileName, int line)){
 
 stackExits StackPush(Stack_t* stk, StackElem_t item DBG(, const char* fileName, int line)){
     STK_CHECK(stk, fileName, line)
+
     *(stk->data + stk->size) = item;
     stk->size += 1;
 
