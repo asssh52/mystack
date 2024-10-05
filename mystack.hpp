@@ -55,19 +55,19 @@
 #endif
 
 enum stackExits{
-    OK = 0,
-    ERR = 1,
-    DATA_EMPTY = 2,
-    SIZE_OVERFLOW = 3,
+    OK =             0,
+    ERR =            1,
+    DATA_EMPTY =     2,
+    SIZE_OVERFLOW =  3,
     SIZE_UNDERFLOW = 4,
-    STK_NULL = 5,
-    MEM_FULL = 6,
-    CNR_STK_ERR = 7,
-    CNR_BUF_ERR = 6,
-    HASH_STK_ERR = 9,
-    HASH_BUF_ERR = 10,
-    REALLOC_ERR = 11
-
+    STK_NULL =       5,
+    MEM_FULL =       6,
+    CNR_STK_ERR =    7,
+    CNR_BUF_ERR =    8,
+    HASH_STK_ERR =   9,
+    HASH_BUF_ERR =   10,
+    REALLOC_ERR =    11,
+    CTOR_ERR =    12
 };
 
 typedef uint64_t canary_t;

@@ -93,6 +93,12 @@ stackExits StackCtor(Stack_t* stk DBG(, const char* fileName, int line)){
     if (!stk) return STK_NULL;
 
     if (!stk->capacity) stk->capacity = startingCapacity;
+
+    if (stk->data){
+        printf( RED "memory has already been allocated\n" RESET);
+        return CTOR_ERR;
+    }
+
     stk->data = (StackElem_t*)(calloc(1,
                                       stk->capacity * sizeof(StackElem_t) CNR_PRT(+ 2 * sizeof(canary_t))));
 

@@ -19,4 +19,9 @@ int main(){
     }
 
     StackDtor(&stack);
+    StackDtor(&stack);
+    StackDtor(&stack);
+    StackCtor(&stack);
+    StackCtor(&stack);
+    StackCtor(&stack);
 }
