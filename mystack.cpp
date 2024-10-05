@@ -64,11 +64,11 @@ stackExits StackRelocate(Stack_t* stk, reallocParameters param){
         StackElem_t* newDataPointer = (StackElem_t*)(realloc((char*)stk->data CNR_PRT(- 1 * sizeof(canary_t)),
                                                             stk->capacity * sizeof(StackElem_t) CNR_PRT(+ 2 * sizeof(canary_t))));
 
-        CNR_PRT(newDataPointer = (StackElem_t*)((char*)newDataPointer + 1 * sizeof(canary_t)));
-
         if (!newDataPointer){
             return REALLOC_ERR;
         }
+
+        CNR_PRT(newDataPointer = (StackElem_t*)((char*)newDataPointer + 1 * sizeof(canary_t)));
 
         if (param == ADD_MEMORY) memset((char*)newDataPointer + (stk->capacity - oldCapacity) * sizeof(StackElem_t), 0, oldCapacity * sizeof(StackElem_t));
 
