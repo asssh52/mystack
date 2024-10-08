@@ -100,7 +100,7 @@ stackExits StackCtor(Stack_t* stk DBG(, const char* fileName, int line)){
     }
 
     stk->data = (StackElem_t*)(calloc(1,
-                                      stk->capacity * sizeof(StackElem_t) CNR_PRT(+ 2 * sizeof(canary_t))));
+                                      stk->capacity * sizeof(StackElem_t) CNR_PRT(+ 3 * sizeof(canary_t))));
 
     CNR_PRT(stk->data = (StackElem_t*)((char*)stk->data + 1 * sizeof(canary_t)));
     if (!stk->data) return MEM_FULL;
@@ -164,6 +164,11 @@ stackExits StackPop(Stack_t* stk, StackElem_t* item DBG(, const char* fileName, 
     if (stk->size == 0){
         printf(RED "stack underflow" DBG(" %s:%d") "\n" RESET DBG(, fileName, line));
         return SIZE_UNDERFLOW;
+    }
+
+    if (item == nullptr){
+        printf(RED "wrong variable pointer" RESET);
+        return USER_ERR;
     }
 
     *item = *(stk->data + stk->size - 1);

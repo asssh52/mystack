@@ -67,7 +67,8 @@ enum stackExits{
     HASH_STK_ERR =   9,
     HASH_BUF_ERR =   10,
     REALLOC_ERR =    11,
-    CTOR_ERR =    12
+    CTOR_ERR =       12,
+    USER_ERR =       13
 };
 
 typedef uint64_t canary_t;
