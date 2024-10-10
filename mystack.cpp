@@ -4,15 +4,15 @@
 #include "mystack.hpp"
 #include "colors.hpp"
 
-const uint64_t startingCapacity = 4;
+const uint64_t startingCapacity = 32;
 
 enum reallocParameters{
     ADD_MEMORY = 1,
     REDUCE_MEMORY = -1,
-    MLTPL_CAPACITY_BOUND = 16
+    MLTPL_CAPACITY_BOUND = 32
 };
 
-uint64_t djb2hashFunc(void* input, size_t size){
+uint64_t djb2hashFunc(const void* input, size_t size){
     uint64_t hash = 0xeda;
     for (int i = 0; i < size; i++){
         hash = (hash * 31) ^ *((char*)input + i);
@@ -24,7 +24,7 @@ HASH_PRT(
 void PutHash(Stack_t* stk){
     stk->bufferHash = djb2hashFunc((char*)stk->data CNR_PRT(- 1 * sizeof(canary_t)), stk->capacity * sizeof(StackElem_t) CNR_PRT(+ 2 * sizeof(canary_t)));
     stk->stackHash  = 0;
-    stk->stackHash  = djb2hashFunc(stk, 5 * sizeof(char*) CNR_PRT(+ 4 * sizeof(canary_t)) DBG(+ 3 * sizeof(char*)));
+    stk->stackHash  = djb2hashFunc(stk, 5 * sizeof(char*) CNR_PRT(+ 2 * sizeof(canary_t)) DBG(+ 3 * sizeof(char*)));
 }
 
 
@@ -37,7 +37,7 @@ uint64_t FindBufferHash(Stack_t* stk){
 uint64_t FindStackHash(Stack_t* stk){
     uint64_t oldStackHash = stk->stackHash;
                             stk->stackHash = 0;
-    uint64_t newStackHash  = djb2hashFunc(stk, 5 * sizeof(char*) CNR_PRT(+ 4 * sizeof(canary_t)) DBG(+ 3 * sizeof(char*)));
+    uint64_t newStackHash  = djb2hashFunc(stk, 5 * sizeof(char*) CNR_PRT(+ 2 * sizeof(canary_t)) DBG(+ 3 * sizeof(char*)));
 
     stk->stackHash = oldStackHash;
 
@@ -100,14 +100,16 @@ stackExits StackCtor(Stack_t* stk DBG(, const char* fileName, int line)){
     }
 
     stk->data = (StackElem_t*)(calloc(1,
-                                      stk->capacity * sizeof(StackElem_t) CNR_PRT(+ 3 * sizeof(canary_t))));
+                                      stk->capacity * sizeof(StackElem_t) CNR_PRT(+ 2 * sizeof(canary_t))));
 
     CNR_PRT(stk->data = (StackElem_t*)((char*)stk->data + 1 * sizeof(canary_t)));
     if (!stk->data) return MEM_FULL;
 
     CNR_PRT(
+    size_t alignByte = (size_t)(stk->capacity * sizeof(StackElem_t));
+
     *(canary_t*)((char*)stk->data - 1 * sizeof(canary_t))                              = 0xbadeda;
-    *(canary_t*)((char*)stk->data + (stk->capacity * sizeof(StackElem_t) / 8) * 8 + 8) = 0x900deda;
+    *(canary_t*)((char*)stk->data + alignByte / 8 * 8 + (8 * (alignByte % 8))) = 0x900deda;
 
     stk->chicken_first  = 0xBADC0DE ;
     stk->chicken_second = 0x900DC0DE;
@@ -124,7 +126,6 @@ stackExits StackCtor(Stack_t* stk DBG(, const char* fileName, int line)){
 
 stackExits StackDtor(Stack_t* stk DBG(, const char* fileName, int line)){
     STK_CHECK(stk, fileName, line)
-
     free((char*)stk->data CNR_PRT(- 1 * sizeof(canary_t)));
 
     stk->data = nullptr;
@@ -137,7 +138,6 @@ stackExits StackDtor(Stack_t* stk DBG(, const char* fileName, int line)){
 
 stackExits StackPush(Stack_t* stk, StackElem_t item DBG(, const char* fileName, int line)){
     STK_CHECK(stk, fileName, line)
-
     *(stk->data + stk->size) = item;
     stk->size += 1;
 
@@ -215,7 +215,6 @@ stackExits StackDump(Stack_t* stk DBG(, const char* filename, int line)){
 
     printf("size:%lu\n",     stk->size);
     printf("capacity:%lu\n", stk->capacity);
-
     if (stk->data){
         CNR_PRT(
         printf("first hen:\t%llx", *(canary_t*)((char*)stk->data - 1 * sizeof(canary_t)));
@@ -230,8 +229,10 @@ stackExits StackDump(Stack_t* stk DBG(, const char* filename, int line)){
         }
 
         CNR_PRT(
-        printf("second hen: \t%llx", *(canary_t*)((char*)stk->data + (stk->capacity * sizeof(StackElem_t) / 8) * 8 + 8));
-        if (*(canary_t*)((char*)stk->data + (stk->capacity * sizeof(StackElem_t) / 8) * 8 + 8) == 0x900deda) printf(GRN " \t\t<OK>\n" YEL);
+        size_t alignByte = (size_t)(stk->capacity * sizeof(StackElem_t));
+
+        printf("second hen: \t%llx", *(canary_t*)((char*)stk->data + alignByte / 8 * 8 + (8 * (alignByte % 8))));
+        if (*(canary_t*)((char*)stk->data + alignByte / 8 * 8 + (8 * (alignByte % 8))) == 0x900deda) printf(GRN " \t\t<OK>\n" YEL);
             else printf(RED " \t\t<NOT OK>\n" YEL);
         printf("expected:   \t900deda\n");
         )
@@ -239,7 +240,6 @@ stackExits StackDump(Stack_t* stk DBG(, const char* filename, int line)){
     else{
         printf("data is empty\n");
     }
-
     CNR_PRT(
 
     printf("second chick:  \t%llx", stk->chicken_second);
@@ -247,7 +247,6 @@ stackExits StackDump(Stack_t* stk DBG(, const char* filename, int line)){
         else printf(RED " \t\t<NOT OK>\n" YEL);
     printf("expected:   \t900dc0de\n");
     )
-
     HASH_PRT(
 
     if (!stk->data){
@@ -255,14 +254,12 @@ stackExits StackDump(Stack_t* stk DBG(, const char* filename, int line)){
     }
 
     else{
-        int64_t newBufferHash = FindBufferHash(stk);
+        uint64_t newBufferHash = FindBufferHash(stk);
         printf("buffer hash:\t%llx", stk->bufferHash);
         if (newBufferHash != stk->bufferHash) printf(RED " \t<NOT OK>\n" YEL);
         else printf(GRN " \t<OK>\n" YEL);
         printf("expected:   \t%llx\n", newBufferHash);
     }
-
-
     uint64_t newStackHash = FindStackHash(stk);
     printf(YEL "stack hash: \t%llx", stk->stackHash);
     if (newStackHash != stk->stackHash) printf(RED " \t<NOT OK>\n" YEL);
@@ -271,12 +268,11 @@ stackExits StackDump(Stack_t* stk DBG(, const char* filename, int line)){
 
     )
 
-
     printf("}\n" RESET);
     return OK;
 }
 
-stackExits StackVerify(Stack_t* stk){
+stackExits  StackVerify(Stack_t* stk){
     if (!stk){
         return ERR;
     }
@@ -291,16 +287,21 @@ stackExits StackVerify(Stack_t* stk){
     if (stk->chicken_first != 0xbadc0de || stk->chicken_second != 0x900dc0de){
         return CNR_STK_ERR;
     }
+
+    size_t alignByte = (size_t)(stk->capacity * sizeof(StackElem_t));
+
     if (*(canary_t*)((char*)stk->data - 1 * sizeof(canary_t)) != 0xbadeda ||
-        *(canary_t*)((char*)stk->data + (stk->capacity * sizeof(StackElem_t) / 8) * 8 + 8) != 0x900deda){
+        *(canary_t*)((char*)stk->data + alignByte / 8 * 8 + (8 * (alignByte % 8))) != 0x900deda){
 
         return CNR_BUF_ERR;
     }
     )
 
     HASH_PRT(
-    char sameStackHash  = (FindStackHash(stk)  == stk->stackHash );
-    char sameBufferHash = (FindBufferHash(stk) == stk->bufferHash);
+    uint64_t newStackHash = FindStackHash(stk);
+    uint64_t newBufferHash = FindBufferHash(stk);
+    char sameStackHash  = (newStackHash  == stk->stackHash );
+    char sameBufferHash = (newBufferHash == stk->bufferHash);
     if (!sameStackHash){
         return HASH_STK_ERR;
     } else if (!sameBufferHash){

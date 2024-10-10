@@ -9,25 +9,8 @@ int main(){
     StackElem_t x = 0;
 
     StackCtor(&stack);
-
-    for (uint64_t i = 0; i < 300; i++){
-        StackPush(&stack, i);
-    }
-
-    StackElem_t y = 0;
-
-    for (uint64_t i = 0; i < 302; i++){
-        StackPop(&stack, &x);
-        if (i == 20){
-            StackDump(&stack);
-            printf("\n%lld\n", x);
-        }
-    }
-
+    StackPush(&stack, 1);
+    StackDump(&stack);
     StackDtor(&stack);
-    StackDtor(&stack);
-    StackDtor(&stack);
-    StackCtor(&stack);
-    StackCtor(&stack);
-    StackCtor(&stack);
+
 }

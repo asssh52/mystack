@@ -1,4 +1,5 @@
 #pragma once
+#include <stdlib.h>
 
 //#define DBG_ENABLE
 #define CNR_ENABLE
