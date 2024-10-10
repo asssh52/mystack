@@ -70,7 +70,7 @@ stackExits StackRelocate(Stack_t* stk, reallocParameters param){
 
         CNR_PRT(newDataPointer = (StackElem_t*)((char*)newDataPointer + 1 * sizeof(canary_t)));
 
-        if (param == ADD_MEMORY) memset((char*)newDataPointer + (stk->capacity - oldCapacity) * sizeof(StackElem_t), 0, oldCapacity * sizeof(StackElem_t));
+        //if (param == ADD_MEMORY) memset((char*)newDataPointer + (stk->capacity - oldCapacity) * sizeof(StackElem_t), 0, (stk->capacity - oldCapacity) * sizeof(StackElem_t));
 
         printf(BLU "new data pointer:%p\n"  RESET, newDataPointer);
         printf(BLU "old capacity:%llu\n"    RESET, oldCapacity);
