@@ -4,7 +4,7 @@
 #include "mystack.hpp"
 #include "colors.hpp"
 
-const uint64_t startingCapacity = 32;
+const uint64_t startingCapacity = 4;
 
 enum reallocParameters{
     ADD_MEMORY = 1,
@@ -79,7 +79,8 @@ stackExits StackRelocate(Stack_t* stk, reallocParameters param){
 
 
         stk->data = newDataPointer;
-        CNR_PRT(*(canary_t*)((char*)stk->data + (stk->capacity * sizeof(StackElem_t) / 8) * 8 + 8) = 0x900deda;)
+        size_t alignByte = (size_t)(stk->capacity * sizeof(StackElem_t));
+        CNR_PRT(*(canary_t*)((char*)stk->data + alignByte / 8 * 8 + (8 * (alignByte % 8))) = 0x900deda;)
     }
 
     else{
@@ -100,7 +101,7 @@ stackExits StackCtor(Stack_t* stk DBG(, const char* fileName, int line)){
     }
 
     stk->data = (StackElem_t*)(calloc(1,
-                                      stk->capacity * sizeof(StackElem_t) CNR_PRT(+ 2 * sizeof(canary_t))));
+                                      stk->capacity * sizeof(StackElem_t) CNR_PRT(+ 3 * sizeof(canary_t))));
 
     CNR_PRT(stk->data = (StackElem_t*)((char*)stk->data + 1 * sizeof(canary_t)));
     if (!stk->data) return MEM_FULL;
@@ -300,11 +301,15 @@ stackExits  StackVerify(Stack_t* stk){
     HASH_PRT(
     uint64_t newStackHash = FindStackHash(stk);
     uint64_t newBufferHash = FindBufferHash(stk);
+
     char sameStackHash  = (newStackHash  == stk->stackHash );
     char sameBufferHash = (newBufferHash == stk->bufferHash);
+
     if (!sameStackHash){
         return HASH_STK_ERR;
-    } else if (!sameBufferHash){
+    }
+
+    else if (!sameBufferHash){
         return HASH_BUF_ERR;
     }
     )
